@@ -1,0 +1,61 @@
+name: Coder AWS provisioning/deprovisioning
+
+# This is partially functional code to prevent huge PRs that are difficult to review.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options:
+          - provision
+          - deprovision
+      slug:
+        type: string
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+
+    if: |
+      (
+        github.event_name == 'issue_comment'
+        && github.event.issue.pull_request
+        && (contains(github.event.comment.body, '/coder-provision') || contains(github.event.comment.body, '/coder-deprovision'))
+        && github.event.comment.user.type != 'Bot'
+      )
+      || github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request' && github.event.action == 'closed')
+
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - run: gh pr checkout ${{ github.event.pull_request.number || github.event.issue.number }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'issue_comment'
+    - run: echo $ACTION $SLUG
+      env:
+        ACTION: |
+          ${{
+            (
+              (
+                github.event_name == 'issue_comment'
+                && github.event.issue.pull_request
+                && contains(github.event.comment.body, '/coder-provision')
+              )
+              || inputs.action == 'provision'
+            )
+            && 'provision'
+            || 'deprovision'
+          }}
+        SLUG: ${{ inputs.slug && format('--slug {0}', inputs.slug) || '' }}
+    - run: git rev-parse --abbrev-ref HEAD
