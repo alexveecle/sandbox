@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 jobs:
-  provision:
+  deploy:
     runs-on: ubuntu-latest
 
     if: |
@@ -38,13 +38,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    # If we are not in workflow dispatch, check out the appropriate branch
     - run: gh pr checkout ${{ github.event.pull_request.number || github.event.issue.number }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: |
         github.event_name == 'issue_comment'
         || (github.event_name == 'pull_request' && github.event.action == 'closed')
-    - run: echo $ACTION $SLUG
+    - run: echo $SLUG $ACTION
       env:
         ACTION: |
           ${{
@@ -60,4 +61,3 @@ jobs:
             || 'deprovision'
           }}
         SLUG: ${{ inputs.slug && format('--slug {0}', inputs.slug) || '' }}
-    - run: git rev-parse --abbrev-ref HEAD
