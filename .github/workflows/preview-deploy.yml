@@ -41,7 +41,9 @@ jobs:
     - run: gh pr checkout ${{ github.event.pull_request.number || github.event.issue.number }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: github.event_name == 'issue_comment'
+      if: |
+        github.event_name == 'issue_comment'
+        || (github.event_name == 'pull_request' && github.event.action == 'closed')
     - run: echo $ACTION $SLUG
       env:
         ACTION: |
