@@ -42,13 +42,13 @@ jobs:
         GITHUB_CONTEXT: ${{ toJson(github) }}
       run: echo "$GITHUB_CONTEXT"
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        ref: ${{ github.head_ref }} 
     # If we are not in workflow dispatch, check out the appropriate branch
     - run: gh pr checkout ${{ github.event.pull_request.number || github.event.issue.number }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: |
-        github.event_name == 'issue_comment'
-        || (github.event_name == 'pull_request' && github.event.action == 'closed')
+      if: github.event_name == 'issue_comment'
     - run: echo $SLUG $ACTION
       env:
         ACTION: |
