@@ -49,6 +49,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: github.event_name == 'issue_comment'
+    - run: git rev-parse --abbrev-ref HEAD
     - run: echo $SLUG $ACTION
       env:
         ACTION: |
