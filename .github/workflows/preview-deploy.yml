@@ -14,13 +14,14 @@ on:
         options:
           - provision
           - deprovision
-      slug:
+      branch:
         type: string
         required: false
 
 permissions:
   id-token: write
   contents: read
+  pull-requests: read
 
 jobs:
   deploy:
@@ -42,25 +43,8 @@ jobs:
         GITHUB_CONTEXT: ${{ toJson(github) }}
       run: echo "$GITHUB_CONTEXT"
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-    # If we are not in workflow dispatch or in a PR merge (where the check out the appropriate branch
+    # If we are not in workflow dispatch, check out the appropriate branch
     - run: gh pr checkout ${{ github.event.pull_request.number || github.event.issue.number }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: github.event_name == 'issue_comment'
-    - run: git rev-parse --abbrev-ref HEAD
-    - run: echo $SLUG $ACTION
-      env:
-        ACTION: |
-          ${{
-            (
-              (
-                github.event_name == 'issue_comment'
-                && github.event.issue.pull_request
-                && contains(github.event.comment.body, '/coder-provision')
-              )
-              || inputs.action == 'provision'
-            )
-            && 'provision'
-            || 'deprovision'
-          }}
-        SLUG: ${{ (inputs.slug || github.head_ref) && format('--slug {0}', (inputs.slug || github.head_ref)) || '' }}
